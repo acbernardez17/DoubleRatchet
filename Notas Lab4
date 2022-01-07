@@ -1,0 +1,10 @@
+1. Se crea la SharedKey y se envía a Alice y Bob
+2. Bob genera su par de claves y envía a Alice su pública
+3. Alice inicia su ratchet
+    3.1 Alice genera su par de claves
+    3.2 Alice combina sus claves con la pública de Bob
+    3.3 Alice genera la root chain y la sending chain con la SharedKey
+    3.4 Alice envía su clave pública a Bob
+4. Bob inicia su ratchet
+    4.1 Bob genera su par de claves
+    4.2
