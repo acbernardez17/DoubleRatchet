@@ -1,6 +1,7 @@
 import base64
+import os
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.hmac import HMAC
 from cryptography.hazmat.backends import default_backend
@@ -77,12 +78,13 @@ class User:
         self.state.shared_key = self.state.diffieHellman_self.exchange(self.state.diffieHellman_remote)
         self.state.root_key, self.state.chainKey_sending = User.kdf_root(self.state.root_key, self.state.shared_key)
 
-    def receive_ratchet(self):
+    def receive_ratchet(self, public_bytes):
         """
         Function to call when receiving a message and the remote public key does not correspond with the one saved
         :return: Nothing, it updates the keys within the state object
         """
         # If header of the message (remote public key) is not the same as before, update shared secret
+        self.state.diffieHellman_remote = X25519PublicKey.from_public_bytes(public_bytes)
         self.state.shared_key = self.state.diffieHellman_self.exchange(self.state.diffieHellman_remote)
         # Updating receiving chain key to decrypt message
         self.state.root_key, self.state.chainKey_receiving = \
@@ -104,28 +106,31 @@ class User:
         # ratchet the sending chain once to obtain the new message key
         message_key, self.state.chainKey_sending = User.kdf_chain(self.state.chainKey_sending)
         # Encrypting the message to send
-        ciphertext = User.encrypt(message_key, msg)
-        message_to_send = self.state.public_key + ciphertext
+        ciphertext = User.encrypt(message_key, bytes(msg, "utf-8"))
+        message_to_send = self.state.public_key.public_bytes() + ciphertext
         self.state.messages_sent += 1
         self.state.last_message_was_sent = True
-        # TODO send ciphertext and prepend current DH public key
+        # return statement just for testing purposes
+        return message_to_send
 
     def receive(self, msg=None):
         """
         Function that handles the keys and the process of receiving a message, it includes some verifications,
         key generations and decryption
-        :param msg: Message received, it is a ciphertext
+        :param msg: Message received, it is a ciphertext containing the public key (32 bytes)
         :return: The plaintext of the decrypted message
         """
         # Not sure yet if checking a message exist is necessary...
         if msg:
             # Checking if the actual remote key is not the same as the specified in the message
-            if not self.state.diffieHellman_remote == msg[:32]:
-                self.receive_ratchet()
+            if not self.state.diffieHellman_remote.public_bytes() == msg[:32]:
+                self.receive_ratchet(msg[:32])
             message_key, self.state.chainKey_receiving = User.kdf_chain(self.state.chainKey_receiving)
-            plaintext = User.decrypt(message_key, msg)
+            plaintext = User.decrypt(message_key, msg[32:])
             self.state.messages_received += 1
             self.state.last_message_was_sent = False
+            # return statement just for testing purposes
+            return plaintext
 
     @staticmethod
     def encrypt(key, plaintext):
@@ -135,8 +140,13 @@ class User:
         :param plaintext: Message that is going to be sent
         :return: The ciphertext of the message
         """
-        cipher = AES.new(key, AES.MODE_GCM)
-        return cipher.encrypt(plaintext)
+        # nonce is like a seed for the encryption algorithm, without this parameter you can't get the plaintext back
+        nonce = os.urandom(12)
+        cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
+        ciphertext, digest = cipher.encrypt_and_digest(plaintext)
+        # Appending nonce to the ciphertext to be able to decrypt it afterwards
+        ciphertext += nonce
+        return ciphertext
 
     @staticmethod
     def decrypt(key, ciphertext):
@@ -146,5 +156,6 @@ class User:
         :param ciphertext: Encrypted message received
         :return: The plaintext of the message
         """
-        cipher = AES.new(key, AES.MODE_GCM)
-        return cipher.decrypt(ciphertext)
+        # Remember that the last 12 bytes are the nonce parameter
+        cipher = AES.new(key, AES.MODE_GCM, nonce=ciphertext[-12:])
+        return cipher.decrypt(ciphertext[:-12])
