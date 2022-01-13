@@ -6,12 +6,11 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X
 
 
 def on_message(client, userdata, msg):
-    if not first_flag:
+    if not Alice.state.diffieHellman_remote is None:
         Alice.state.diffieHellman_remote = X25519PublicKey.from_public_bytes(msg.payload)
-        msg = Alice.state.public_key.public_bytes(encoding=serialization.Encoding.Raw,
+        send_initial_public_key_msg = Alice.state.public_key.public_bytes(encoding=serialization.Encoding.Raw,
                                                   format=serialization.PublicFormat.Raw)
-        mqtt_utils.publish(clientAlice, "ACB.out", msg)
-        flag = True
+        mqtt_utils.publish(clientAlice, "ACB.out", send_initial_public_key_msg)
         return 
         # Get Bob's public key
         # Send Alice's public key
@@ -38,13 +37,17 @@ if __name__ == "__main__":
     mqtt_utils.subscribe(clientAlice, "ACB.in")
     clientAlice.on_message = on_message
     clientAlice.loop_start()
+    send_public_key_msg = Alice.state.public_key.public_bytes(encoding=serialization.Encoding.Raw,
+                                                  format=serialization.PublicFormat.Raw)
+    mqtt_utils.publish(clientAlice, "ACB.out", send_public_key_msg)
+    
     time.sleep(1)
     
     while True: 
         value = input(chr(27)+"[1;35m"+"\n\nAlice:")
         print(chr(27)+"[0;30m")
-        msg = Alice.send(value)
-        mqtt_utils.publish(clientAlice, "ACB.out", msg)
+        text_to_send = Alice.send(value)
+        mqtt_utils.publish(clientAlice, "ACB.out", text_to_send)
         
 
 
