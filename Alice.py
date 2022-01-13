@@ -6,24 +6,26 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X
 
 
 def on_message(client, userdata, msg):
-    if not Alice.state.diffieHellman_remote is None:
+    if Alice.state.diffieHellman_remote is None:
         Alice.state.diffieHellman_remote = X25519PublicKey.from_public_bytes(msg.payload)
+        print(f"[+] RECEIVED KEY: {msg.payload}")
         send_initial_public_key_msg = Alice.state.public_key.public_bytes(encoding=serialization.Encoding.Raw,
-                                                  format=serialization.PublicFormat.Raw)
+                                                                          format=serialization.PublicFormat.Raw)
         mqtt_utils.publish(clientAlice, "ACB.out", send_initial_public_key_msg)
-        return 
+        return
         # Get Bob's public key
         # Send Alice's public key
-    print(chr(27)+"[1;31m" + "\n\nBob:")
-    print(msg.payload)
-    print(Alice.receive(msg.payload))
-    print(chr(27)+"[1;35m" + "\n\nAlice:")
+    else:
+        print(chr(27) + "[1;31m" + "\n\nBob:")
+        print(msg.payload)
+        print(Alice.receive(msg.payload))
+        print(chr(27) + "[1;35m" + "\n\nAlice:")
 
 
 if __name__ == "__main__":
     first_flag = False
     # Generating the first shared root key of 32 bytes
-    initial_root_key = b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" 
+    initial_root_key = b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
     # Initializing users that are going to communicate
     Alice = User("Alice", initial_root_key)
@@ -32,25 +34,22 @@ if __name__ == "__main__":
     # Initialize ratchets
     # Alice.initialize_ratchet(Bob.state.public_key)
     # Bob.initialize_ratchet(Alice.state.public_key)
-    
+
     clientAlice = mqtt_utils.connect_mqtt("ALICE")
     mqtt_utils.subscribe(clientAlice, "ACB.in")
     clientAlice.on_message = on_message
     clientAlice.loop_start()
     send_public_key_msg = Alice.state.public_key.public_bytes(encoding=serialization.Encoding.Raw,
-                                                  format=serialization.PublicFormat.Raw)
+                                                              format=serialization.PublicFormat.Raw)
     mqtt_utils.publish(clientAlice, "ACB.out", send_public_key_msg)
-    
+
     time.sleep(1)
-    
-    while True: 
-        value = input(chr(27)+"[1;35m"+"\n\nAlice:")
-        print(chr(27)+"[0;30m")
+
+    while True:
+        value = input(chr(27) + "[1;35m" + "\n\nAlice:")
+        print(chr(27) + "[0;30m")
         text_to_send = Alice.send(value)
         mqtt_utils.publish(clientAlice, "ACB.out", text_to_send)
-        
-
-
 
     # # Now both have the same root key and the shared secret
     # b_msg_1 = Bob.send("Hello world!")

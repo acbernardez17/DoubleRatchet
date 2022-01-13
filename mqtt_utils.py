@@ -27,6 +27,7 @@ def publish(client, topic, msg):
     else:
         print(f"Failed to send message to topic {topic}")
 
+
 def subscribe(client: mqtt_client, topic):
     def on_message(client, userdata, msg):
         print(msg.payload.decode())
