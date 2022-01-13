@@ -11,9 +11,8 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 # while True:
 #     time.sleep(100)
     
-root_key = """
+root_key = b""
 
-"""
 alice_private_dh = X25519PrivateKey.generate()
 alice_public_dh = alice_private_dh.public_key()
 
@@ -26,7 +25,7 @@ shared_key2 = bob_private_dh.exchange(alice_public_dh)
 root_key, chain_key = HKDF(
     algorithm=hashes.SHA256(),
     length=32,
-    salt = root_key,
+    salt=root_key,
     info=b'handshake data',
 ).derive(shared_key1)
 
