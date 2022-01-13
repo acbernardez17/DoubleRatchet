@@ -15,8 +15,13 @@ if __name__ == "__main__":
     Bob.initialize_ratchet(Alice.state.public_key)
 
     # Now both have the same root key and the shared secret
-    msg = Bob.send("Hello world!")
-    print(Alice.receive(msg))
-    print("HI")
+    b_msg_1 = Bob.send("Hello world!")
+    print(Alice.receive(b_msg_1))
+    b_msg_2 = Bob.send("This is Bob's second message")
+    print(Alice.receive(b_msg_2))
+    a_msg_1 = Alice.send("Hello, I'm Alice!")
+    print(Bob.receive(a_msg_1))
+    b_msg_3 = Bob.send("Nice to meet you Alice!, I'm Bob")
+    print(Alice.receive(b_msg_3))
     # TODO Instead of local communication use the MQTT Server
     # TODO Implement the logic to send/receive messages
