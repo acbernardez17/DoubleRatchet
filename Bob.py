@@ -1,5 +1,6 @@
 # from asyncio.windows_events import NULL
 import os
+from random import random
 from xmlrpc.client import boolean
 from user import User
 import mqtt_utils, time
@@ -11,9 +12,9 @@ def on_message(client, userdata, msg):
     if Bob.state.diffieHellman_remote is None:
         print(f"[+] RECEIVED KEY: {msg.payload}")
         Bob.state.diffieHellman_remote = X25519PublicKey.from_public_bytes(msg.payload)
-        send_initial_public_key_msg = Bob.state.public_key.public_bytes(encoding=serialization.Encoding.Raw,
-                                                                        format=serialization.PublicFormat.Raw)
-        mqtt_utils.publish(clientBob, "ACB.in", send_initial_public_key_msg)
+        # send_initial_public_key_msg = Bob.state.public_key.public_bytes(encoding=serialization.Encoding.Raw,
+        #                                                                 format=serialization.PublicFormat.Raw)
+        # mqtt_utils.publish(clientBob, "ACB.in", send_initial_public_key_msg)
         return
     else:
         print(chr(27) + "[1;31m" + "\n\nAlice:")
@@ -34,7 +35,7 @@ if __name__ == "__main__":
     # Alice.initialize_ratchet(Bob.state.public_key)
     # Bob.initialize_ratchet(Bob.st)
 
-    clientBob = mqtt_utils.connect_mqtt("BOB")
+    clientBob = mqtt_utils.connect_mqtt("BOB" + str(random()))
     mqtt_utils.subscribe(clientBob, "ACB.out")
     clientBob.on_message = on_message
     clientBob.loop_start()

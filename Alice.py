@@ -1,4 +1,5 @@
 import os
+from random import random
 from user import User
 import mqtt_utils, time
 from cryptography.hazmat.primitives import serialization
@@ -7,6 +8,7 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X
 
 def on_message(client, userdata, msg):
     if Alice.state.diffieHellman_remote is None:
+        print ("Entra")
         Alice.state.diffieHellman_remote = X25519PublicKey.from_public_bytes(msg.payload)
         print(f"[+] RECEIVED KEY: {msg.payload}")
         send_initial_public_key_msg = Alice.state.public_key.public_bytes(encoding=serialization.Encoding.Raw,
@@ -34,14 +36,13 @@ if __name__ == "__main__":
     # Initialize ratchets
     # Alice.initialize_ratchet(Bob.state.public_key)
     # Bob.initialize_ratchet(Alice.state.public_key)
-
-    clientAlice = mqtt_utils.connect_mqtt("ALICE")
+    clientAlice = mqtt_utils.connect_mqtt("ALICE" + str(random()))
     mqtt_utils.subscribe(clientAlice, "ACB.in")
     clientAlice.on_message = on_message
     clientAlice.loop_start()
     send_public_key_msg = Alice.state.public_key.public_bytes(encoding=serialization.Encoding.Raw,
                                                               format=serialization.PublicFormat.Raw)
-    mqtt_utils.publish(clientAlice, "ACB.out", send_public_key_msg)
+    # mqtt_utils.publish(clientAlice, "ACB.out", send_public_key_msg)
 
     time.sleep(1)
 
