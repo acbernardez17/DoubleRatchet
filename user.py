@@ -20,6 +20,7 @@ class User:
         self.other_user = "Alice" if name == "Bob" else "Bob"
 
     @staticmethod
+    # TODO Creo que no se usa
     def b64(msg):
         # base64 encoding helper function
         return base64.encodebytes(msg).decode('utf-8').strip()
@@ -124,7 +125,8 @@ class User:
         # Not sure yet if checking a message exist is necessary...
         if msg:
             # Checking if the actual remote key is not the same as the specified in the message
-            if not self.state.diffieHellman_remote.public_bytes() == msg[:32]:
+            if not self.state.diffieHellman_remote.public_bytes(encoding=serialization.Encoding.Raw,
+                                                                format=serialization.PublicFormat.Raw) == msg[:32]:
                 self.receive_ratchet(msg[:32])
             message_key, self.state.chainKey_receiving = User.kdf_chain(self.state.chainKey_receiving)
             plaintext = User.decrypt(message_key, msg[32:])
@@ -142,7 +144,7 @@ class User:
         :return: The ciphertext of the message
         """
         # nonce is like a seed for the encryption algorithm, without this parameter you can't get the plaintext back
-        nonce = os.urandom(12)
+        nonce = os.urandom(12)  # TODO Librería propia para randoms
         cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
         ciphertext, digest = cipher.encrypt_and_digest(plaintext)
         # Appending nonce to the ciphertext to be able to decrypt it afterwards
