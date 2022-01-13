@@ -6,10 +6,10 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X
 
 
 def on_message(client, userdata, msg):
-    if not flag:
+    if not first_flag:
         Alice.state.diffieHellman_remote = X25519PublicKey.from_public_bytes(msg.payload)
         msg = Alice.state.public_key.public_bytes(encoding=serialization.Encoding.Raw,
-                                                             format=serialization.PublicFormat.Raw)
+                                                  format=serialization.PublicFormat.Raw)
         mqtt_utils.publish(clientAlice, "ACB.out", msg)
         flag = True
         return 
@@ -17,11 +17,12 @@ def on_message(client, userdata, msg):
         # Send Alice's public key
     print(chr(27)+"[1;31m" + "\n\nBob:")
     print(msg.payload)
-    print(Bob.receive(msg.payload))
+    print(Alice.receive(msg.payload))
     print(chr(27)+"[1;35m" + "\n\nAlice:")
 
+
 if __name__ == "__main__":
-    flag = False
+    first_flag = False
     # Generating the first shared root key of 32 bytes
     initial_root_key = b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" 
 

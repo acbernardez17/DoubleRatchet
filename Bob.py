@@ -2,6 +2,7 @@ import os
 from user import User
 import mqtt_utils, time
 
+
 def on_message(client, userdata, msg):
     if not flag:
         print()
@@ -11,6 +12,7 @@ def on_message(client, userdata, msg):
     print(msg.payload)
     print(Bob.receive(msg.payload))
     print(chr(27)+"[1;35m" + "\n\nBob:")
+
 
 if __name__ == "__main__":
     flag = False
