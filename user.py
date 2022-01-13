@@ -1,6 +1,6 @@
 import base64
 import os
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.hmac import HMAC
@@ -107,7 +107,8 @@ class User:
         message_key, self.state.chainKey_sending = User.kdf_chain(self.state.chainKey_sending)
         # Encrypting the message to send
         ciphertext = User.encrypt(message_key, bytes(msg, "utf-8"))
-        message_to_send = self.state.public_key.public_bytes() + ciphertext
+        message_to_send = self.state.public_key.public_bytes(encoding=serialization.Encoding.Raw,
+                                                             format=serialization.PublicFormat.Raw) + ciphertext
         self.state.messages_sent += 1
         self.state.last_message_was_sent = True
         # return statement just for testing purposes
