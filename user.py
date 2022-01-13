@@ -14,7 +14,7 @@ class User:
     def __init__(self, name, root_key):
         self.name = name
         self.state = State(root_key)
-        # Generating a object from which we will get the public key
+        # Generating an object from which we will get the public key
         self.state.diffieHellman_self = X25519PrivateKey.generate()
         self.state.public_key = self.state.diffieHellman_self.public_key()
 
