@@ -1,7 +1,6 @@
 import base64
-from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey, Ed25519PrivateKey
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.hmac import HMAC
 from cryptography.hazmat.backends import default_backend
@@ -17,6 +16,7 @@ class User:
         # Generating an object from which we will get the public key
         self.state.diffieHellman_self = X25519PrivateKey.generate()
         self.state.public_key = self.state.diffieHellman_self.public_key()
+        self.other_user = "Alice" if name == "Bob" else "Bob"
 
     @staticmethod
     def b64(msg):
@@ -88,45 +88,63 @@ class User:
         self.state.root_key, self.state.chainKey_receiving = \
             User.kdf_root(self.state.root_key, self.state.shared_key)
 
-    def send(self, alice, msg):
+    def send(self, msg=None):
         """
-
-        :param alice:
-        :param msg:
-        :return:
+        Function that handles the keys and the process of sending a message, it includes some verifications,
+        key generations and encryption
+        :param msg: Message to send
+        :return: Nothing, when finish the message should be sent
         """
         # Checking if we are going to send a message after sending another
         # In this case there is no need to update the DH keys
-        # TODO use and set variable "last_message_was_sent"
-        # TODO implement message counting
         if not self.state.last_message_was_sent:
             # In case last message was received update our DH key pair and sending keychain
             self.send_ratchet()
 
         # ratchet the sending chain once to obtain the new message key
         message_key, self.state.chainKey_sending = User.kdf_chain(self.state.chainKey_sending)
-        # print(f'[+]\t{self.name} sending ciphertext: {}', b64(cipher))
-        # send ciphertext and current DH public key
+        # Encrypting the message to send
+        ciphertext = User.encrypt(message_key, msg)
+        message_to_send = self.state.public_key + ciphertext
+        self.state.messages_sent += 1
+        self.state.last_message_was_sent = True
+        # TODO send ciphertext and prepend current DH public key
 
     def receive(self, msg=None):
+        """
+        Function that handles the keys and the process of receiving a message, it includes some verifications,
+        key generations and decryption
+        :param msg: Message received, it is a ciphertext
+        :return: The plaintext of the decrypted message
+        """
         # Not sure yet if checking a message exist is necessary...
         if msg:
             # Checking if the actual remote key is not the same as the specified in the message
             if not self.state.diffieHellman_remote == msg[:32]:
                 self.receive_ratchet()
             message_key, self.state.chainKey_receiving = User.kdf_chain(self.state.chainKey_receiving)
+            plaintext = User.decrypt(message_key, msg)
+            self.state.messages_received += 1
+            self.state.last_message_was_sent = False
 
-    # TODO Encrypt and decrypt messages
+    @staticmethod
+    def encrypt(key, plaintext):
+        """
+        Function that encrypts a message with a key using AES encryption in GCM Mode
+        :param key: Message key to encrypt the plaintext
+        :param plaintext: Message that is going to be sent
+        :return: The ciphertext of the message
+        """
+        cipher = AES.new(key, AES.MODE_GCM)
+        return cipher.encrypt(plaintext)
 
-    def encrypt(self):
-        pass
-
-    def decrypt(self):
-        pass
-
-    def RatchetEncrypt(self, state, plaintext, AD):
-        # TODO Function copy/pasted from signal Docs, check...
-        state.CKs, mk = KDF_CK(state.CKs)
-        header = HEADER(state.DHs, state.PN, state.Ns)
-        state.Ns += 1
-        return header, ENCRYPT(mk, plaintext, CONCAT(AD, header))
+    @staticmethod
+    def decrypt(key, ciphertext):
+        """
+        Function that decrypts a message with a key using AES encryption in GCM Mode
+        :param key: Message key to decrypt the ciphertext
+        :param ciphertext: Encrypted message received
+        :return: The plaintext of the message
+        """
+        cipher = AES.new(key, AES.MODE_GCM)
+        return cipher.decrypt(ciphertext)
