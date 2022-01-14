@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 def on_message(client, userdata, msg):
     if Alice.state.diffieHellman_remote is None:
         Alice.state.diffieHellman_remote = X25519PublicKey.from_public_bytes(msg.payload)
-        print(f"[+] RECEIVED KEY: {msg.payload}")
+        # print(f"[+] RECEIVED KEY: {msg.payload}")
         send_initial_public_key_msg = Alice.state.public_key.public_bytes(encoding=serialization.Encoding.Raw,
                                                                           format=serialization.PublicFormat.Raw)
         mqtt_utils.publish(clientAlice, "ACB.out", send_initial_public_key_msg)

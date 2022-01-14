@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 
 def on_message(client, userdata, msg):
     if Bob.state.diffieHellman_remote is None:
-        print(f"[+] RECEIVED KEY: {msg.payload}")
+        # print(f"[+] RECEIVED KEY: {msg.payload}")
         Bob.state.diffieHellman_remote = X25519PublicKey.from_public_bytes(msg.payload)
         # send_initial_public_key_msg = Bob.state.public_key.public_bytes(encoding=serialization.Encoding.Raw,
         #                                                                 format=serialization.PublicFormat.Raw)
