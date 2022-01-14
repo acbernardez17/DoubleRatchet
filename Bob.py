@@ -1,3 +1,8 @@
+"""
+Authors: Antonio Cebreiro Bernardez y Gonzalo Abal
+        Double Ratchet Implementation with MQTT Server
+"""
+
 from random import random
 from user import User
 import mqtt_utils
@@ -8,17 +13,10 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 
 def on_message(client, userdata, msg):
     if Bob.state.diffieHellman_remote is None:
-        # print(f"[+] RECEIVED KEY: {msg.payload}")
         Bob.state.diffieHellman_remote = X25519PublicKey.from_public_bytes(msg.payload)
-        # send_initial_public_key_msg = Bob.state.public_key.public_bytes(encoding=serialization.Encoding.Raw,
-        #                                                                 format=serialization.PublicFormat.Raw)
-        # mqtt_utils.publish(clientBob, "ACB.in", send_initial_public_key_msg)
         return
     else:
-        # print(chr(27) + "[1;31m" + "\n\nAlice:")
-        # print(msg.payload)
-        print(f'[+] Alice says: {Bob.receive(msg.payload).decode("utf-8")}')
-        print(chr(27) + "[1;35m" + "\nBob:")
+        print(f'\n[+] Alice says: {Bob.receive(msg.payload).decode("utf-8")}')
 
 
 if __name__ == "__main__":
@@ -42,22 +40,9 @@ if __name__ == "__main__":
 
     while True:
         try:
-            value = input(chr(27) + "[1;35m" + "\nBob:")
-            print(chr(27) + "[1;30m")
+            value = input(chr(27) + "[1;35m" + "Bob:")
             text_to_send = Bob.send(value)
             mqtt_utils.publish(clientBob, "ACB.in", text_to_send)
         except KeyboardInterrupt:
             print("[+] Finishing conversation...")
             break
-
-    # # Now both have the same root key and the shared secret
-    # b_msg_1 = Bob.send("Hello world!")
-    # print(Alice.receive(b_msg_1))
-    # b_msg_2 = Bob.send("This is Bob's second message")
-    # print(Alice.receive(b_msg_2))
-    # a_msg_1 = Alice.send("Hello, I'm Alice!")
-    # print(Bob.receive(a_msg_1))
-    # b_msg_3 = Bob.send("Nice to meet you Alice!, I'm Bob")
-    # print(Alice.receive(b_msg_3))
-    # # TODO Instead of local communication use the MQTT Server
-    # # TODO Implement the logic to send/receive messages

@@ -1,10 +1,16 @@
+"""
+Authors: Antonio Cebreiro Bernardez y Gonzalo Abal
+        Double Ratchet Implementation with MQTT Server
+"""
+
 import os
 from user import User
 
+# THIS CODE WAS USED TO TEST LOCALLY ###
 
 if __name__ == "__main__":
     # Generating the first shared root key of 32 bytes
-    initial_root_key = os.urandom(32)  # TODO Use library random, not computer random AND 16 bytes or 32?
+    initial_root_key = os.urandom(32)
 
     # Initializing users that are going to communicate
     Alice = User("Alice", initial_root_key)
@@ -23,5 +29,3 @@ if __name__ == "__main__":
     print(Bob.receive(a_msg_1))
     b_msg_3 = Bob.send("Nice to meet you Alice!, I'm Bob")
     print(Alice.receive(b_msg_3))
-    # TODO Instead of local communication use the MQTT Server
-    # TODO Implement the logic to send/receive messages

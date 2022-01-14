@@ -1,3 +1,9 @@
+"""
+Authors: Antonio Cebreiro Bernardez y Gonzalo Abal
+        Double Ratchet Implementation with MQTT Server
+"""
+
+
 class State:
 
     def __init__(self, initial_root_key):

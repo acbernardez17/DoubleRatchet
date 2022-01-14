@@ -1,4 +1,8 @@
-import base64
+"""
+Authors: Antonio Cebreiro Bernardez y Gonzalo Abal
+        Double Ratchet Implementation with MQTT Server
+"""
+
 import os
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
@@ -19,11 +23,6 @@ class User:
         self.state.public_key = self.state.diffieHellman_self.public_key()
         self.other_user = "Alice" if name == "Bob" else "Bob"
         self.first_message_public_key_sent = False
-
-    # @staticmethod
-    # def b64(msg):
-    #     # base64 encoding helper function
-    #     return base64.encodebytes(msg).decode('utf-8').strip()
 
     def initialize_ratchet(self, user):
         """
