@@ -18,15 +18,16 @@ class User:
         self.state.diffieHellman_self = X25519PrivateKey.generate()
         self.state.public_key = self.state.diffieHellman_self.public_key()
         self.other_user = "Alice" if name == "Bob" else "Bob"
+        self.first_message_public_key_sent = False
 
-    @staticmethod
-    # TODO Creo que no se usa
-    def b64(msg):
-        # base64 encoding helper function
-        return base64.encodebytes(msg).decode('utf-8').strip()
+    # @staticmethod
+    # def b64(msg):
+    #     # base64 encoding helper function
+    #     return base64.encodebytes(msg).decode('utf-8').strip()
 
     def initialize_ratchet(self, user):
         """
+        This function is not used when communicating trough MQTT
         Function used to initialize the protocol, calculating the shared key
         :param user: External public key
         :return: Nothing, it stores the shared key within the state object
